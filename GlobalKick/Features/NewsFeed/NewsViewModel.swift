@@ -98,7 +98,11 @@ class NewsViewModel: ObservableObject {
             } catch let networkError as NetworkError {
                 error = networkError
             } catch {
-                self.error = NetworkError.requestFailed(error)
+                if let networkError = error as? NetworkError {
+                    self.error = networkError
+                } else {
+                    self.error = NetworkError.unknown(message: error.localizedDescription)
+                }
             }
             
             isLoading = false
@@ -145,7 +149,11 @@ class NewsViewModel: ObservableObject {
             } catch let networkError as NetworkError {
                 error = networkError
             } catch {
-                self.error = NetworkError.requestFailed(error)
+                if let networkError = error as? NetworkError {
+                    self.error = networkError
+                } else {
+                    self.error = NetworkError.unknown(message: error.localizedDescription)
+                }
             }
             
             isLoading = false
@@ -329,8 +337,13 @@ class NewsViewModel: ObservableObject {
             } catch {
                 guard !Task.isCancelled else { return }
                 
+                if let networkError = error as? NetworkError {
+                    self.error = networkError
+                } else {
+                    self.error = NetworkError.unknown(message: error.localizedDescription)
+                }
+                
                 await MainActor.run {
-                    self.error = error
                     isLoading = false
                 }
             }
@@ -343,9 +356,14 @@ class NewsViewModel: ObservableObject {
         // 下面是模拟的实现
         try await Task.sleep(nanoseconds: 1_000_000_000) // 模拟网络延迟
         
-        // 从现有文章中过滤
-        // 在实际应用中，应该调用后端API
-        return MockData.sampleArticles.filter { 
+        // 临时使用空数组或硬编码的测试数据
+        return []  // 临时返回空数组
+        // 或者
+        return [
+            Article(id: "1", title: "测试文章包含足球关键词", content: "测试内容...", 
+                // 其他必要属性...
+            )
+        ].filter { 
             $0.title.localizedCaseInsensitiveContains(query) || 
             $0.content.localizedCaseInsensitiveContains(query)
         }
