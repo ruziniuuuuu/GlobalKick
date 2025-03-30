@@ -101,7 +101,7 @@ class NewsViewModel: ObservableObject {
                 if let networkError = error as? NetworkError {
                     self.error = networkError
                 } else {
-                    self.error = NetworkError.unknown(message: error.localizedDescription)
+                    self.error = NetworkError.generalError
                 }
             }
             
@@ -152,7 +152,7 @@ class NewsViewModel: ObservableObject {
                 if let networkError = error as? NetworkError {
                     self.error = networkError
                 } else {
-                    self.error = NetworkError.unknown(message: error.localizedDescription)
+                    self.error = NetworkError.generalError
                 }
             }
             
@@ -340,7 +340,8 @@ class NewsViewModel: ObservableObject {
                 if let networkError = error as? NetworkError {
                     self.error = networkError
                 } else {
-                    self.error = NetworkError.unknown(message: error.localizedDescription)
+                    print("Error: \(error.localizedDescription)")
+                    self.error = nil
                 }
                 
                 await MainActor.run {
@@ -352,20 +353,15 @@ class NewsViewModel: ObservableObject {
     
     // 实际的搜索API调用
     private func searchArticles(query: String) async throws -> [NewsArticle] {
-        // 这里替换为实际的API调用
-        // 下面是模拟的实现
-        try await Task.sleep(nanoseconds: 1_000_000_000) // 模拟网络延迟
+        // 模拟网络延迟
+        try await Task.sleep(nanoseconds: 1_000_000_000)
         
-        // 临时使用空数组或硬编码的测试数据
-        return []  // 临时返回空数组
-        // 或者
-        return [
-            Article(id: "1", title: "测试文章包含足球关键词", content: "测试内容...", 
-                // 其他必要属性...
-            )
-        ].filter { 
-            $0.title.localizedCaseInsensitiveContains(query) || 
-            $0.content.localizedCaseInsensitiveContains(query)
+        // 根据当前列表过滤，不需要创建新对象
+        return articles.filter { article in
+            article.title.localizedCaseInsensitiveContains(query)
+            // 如果 NewsArticle 有类似 content 的其他属性，也可以添加
+            // || article.description.localizedCaseInsensitiveContains(query)
+            // || article.body.localizedCaseInsensitiveContains(query)
         }
     }
 } 
