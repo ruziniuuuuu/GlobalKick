@@ -18,7 +18,8 @@ struct NewsFeedView: View {
                         TextField("搜索新闻", text: $viewModel.searchQuery)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
-                            .onChange(of: viewModel.searchQuery) { _ in
+                            .submitLabel(.search)
+                            .onSubmit {
                                 Task {
                                     await viewModel.debounceSearch()
                                 }
@@ -39,6 +40,10 @@ struct NewsFeedView: View {
                     .padding(8)
                     .background(Color(.systemBackground))
                     .cornerRadius(10)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                    )
                     .padding(.horizontal)
                     .padding(.top, 8)
                     

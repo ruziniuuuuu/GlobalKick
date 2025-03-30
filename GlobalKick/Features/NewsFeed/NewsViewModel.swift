@@ -8,6 +8,7 @@ class NewsViewModel: ObservableObject {
     @Published var error: NetworkError? = nil
     @Published var selectedFilters: [NewsFilter] = []
     @Published var availableFilters: [NewsFilter] = []
+    @Published var searchQuery = ""
     
     // MARK: - 私有属性
     private let newsService = NewsService.shared
@@ -18,6 +19,7 @@ class NewsViewModel: ObservableObject {
     private var hasMoreContent: Bool = true
     private var currentTask: Task<Void, Never>? = nil
     private var cancellables = Set<AnyCancellable>()
+    private var searchTask: Task<Void, Never>?
     
     // MARK: - 初始化
     init() {
@@ -291,4 +293,61 @@ class NewsViewModel: ObservableObject {
         return viewModel
     }
     #endif
+    
+    // MARK: - 搜索方法
+    func debounceSearch() async {
+        // 取消之前的搜索任务
+        searchTask?.cancel()
+        
+        // 如果搜索字符串为空，刷新全部内容
+        if searchQuery.isEmpty {
+            await refresh()
+            return
+        }
+        
+        // 创建新的搜索任务
+        searchTask = Task {
+            // 延迟500毫秒，实现防抖
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            guard !Task.isCancelled else { return }
+            
+            await MainActor.run {
+                isLoading = true
+                error = nil
+            }
+            
+            do {
+                // 调用搜索API
+                let searchResults = try await searchArticles(query: searchQuery)
+                
+                guard !Task.isCancelled else { return }
+                
+                await MainActor.run {
+                    articles = searchResults
+                    isLoading = false
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+                
+                await MainActor.run {
+                    self.error = error
+                    isLoading = false
+                }
+            }
+        }
+    }
+    
+    // 实际的搜索API调用
+    private func searchArticles(query: String) async throws -> [NewsArticle] {
+        // 这里替换为实际的API调用
+        // 下面是模拟的实现
+        try await Task.sleep(nanoseconds: 1_000_000_000) // 模拟网络延迟
+        
+        // 从现有文章中过滤
+        // 在实际应用中，应该调用后端API
+        return MockData.sampleArticles.filter { 
+            $0.title.localizedCaseInsensitiveContains(query) || 
+            $0.content.localizedCaseInsensitiveContains(query)
+        }
+    }
 } 
