@@ -10,6 +10,38 @@ struct NewsFeedView: View {
                 backgroundColorView
                 
                 VStack(spacing: 0) {
+                    // 搜索栏
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.secondary)
+                        
+                        TextField("搜索新闻", text: $viewModel.searchQuery)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .onChange(of: viewModel.searchQuery) { _ in
+                                Task {
+                                    await viewModel.debounceSearch()
+                                }
+                            }
+                        
+                        if !viewModel.searchQuery.isEmpty {
+                            Button(action: {
+                                viewModel.searchQuery = ""
+                                Task {
+                                    await viewModel.refresh()
+                                }
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                    .padding(8)
+                    .background(Color(.systemBackground))
+                    .cornerRadius(10)
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    
                     // 筛选器区域
                     NewsFilterChips(
                         selectedFilters: $viewModel.selectedFilters,
